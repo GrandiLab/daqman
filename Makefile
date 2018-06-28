@@ -62,7 +62,10 @@ ROOTINCLUDEPATH := $(INCLUDES)
 INCLUDES    += -I/sw/include -I$(PWD) 
 #some systems want malloc
 INCLUDES    += -I/usr/include/malloc
-
+#add MySQL++ Libraries
+INCLUDES    += -I/usr/include/mysql
+INCLUDES    += -I/usr/include/mysql++
+LDFLAGS     += -lmysqlpp
 
 #generic c++ and ld flags
 CXXFLAGS    += $(DEBUGFLAGS) -O3 -g -Wall $(INCLUDES)  -Wno-format-y2k -fPIC
@@ -82,12 +85,18 @@ else
 ifeq ("$(shell /sbin/ldconfig -p | grep libboost_thread-mt.so)","") 
 THREADLIBS  += -L/usr/local/lib64/boost -lboost_thread -lboost_date_time
 else
+# THREADLIBS += -L/usr/local/lib -lboost_thread -lboost_date_time
 THREADLIBS  += -lboost_thread-mt -lboost_date_time-mt
 endif
 endif
 #for Princeton machines
 #CAENLIBS    := -lCAENVME 
 #THREADLIBS  += -lboost_thread -lboost_date_time
+THREADLIBS += -L/usr/local/lib -lboost_system -lboost_thread -lboost_date_time
+
+ifeq ("$(shell /bin/hostname)","muttley")
+CXXFLAGS    += -DRELAXDB
+endif
 
 #hardcode the path to link against daqman
 LIBS     += -Wl,-rpath,$(PWD)/lib 
