@@ -17,6 +17,8 @@
 #include "SumOfIntegralEval.hh"
 #include "TimeOfFlight.hh"
 
+#include "APFinder.hh"
+
 int EventHandler::AddCommonModules()
 {
   AddModule<ConvertData>();
@@ -38,5 +40,8 @@ int EventHandler::AddCommonModules()
 #ifdef SCENEDB
   AddModule<TimeOfFlight>();
 #endif
+
+  AddModule<APFinder>();
+
   return 13;
 }
