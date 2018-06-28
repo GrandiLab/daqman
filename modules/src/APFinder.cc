@@ -60,14 +60,28 @@ int APFinder::EvalWav(ChannelData* chdata) const
 {
 
     double* wav = chdata->GetBaselineSubtractedWaveform();
+    double* integral = chdata->GetIntegralWaveform();
 
     int n = chdata->nsamps;
 
+    // Define the second derivative of the integral (will look for where it becomes positive)
+    std::vector<double> curve(n);
+    curve[0] = integral[1];
+    for (int i = 1; i < n-1; i++) {
+        curve[i] = integral[i-1] + integral[i+1] - 2*integral[i];
+    }
+
     int count = 0;
     bool pstart = false;
+    int pstart_ind = 0;
+    int pend_ind = 0;
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n-1; i++)
     {
+
+        if (wav[i] < amp_threshold) {
+            pstart = true;
+        }
 
         if (wav[i] < amp_threshold && wav[i] < wav[i-1] && wav[i] < wav[i+1]) {
 
