@@ -58,7 +58,8 @@ void runinfo::Init(bool reset)
   endtime=0;
   triggers=0;
   events=0;
-  
+  type="";
+
   metadata.clear();
   prerun_dialog_fields.clear();
   postrun_dialog_fields.clear();
@@ -77,7 +78,8 @@ void runinfo::InitializeParameterList()
   RegisterParameter("endtime",endtime, "Timestamp at end of run");
   RegisterParameter("triggers",triggers,"Total triggers requested during run");
   RegisterParameter("events", events, "Number of events recorded during run");
-  
+  RegisterParameter("type", type, "Type of Run");
+
   RegisterParameter("metadata", metadata, 
 		    "User-defined per run info categories");
   RegisterParameter("prerun_dialog_fields", prerun_dialog_fields,

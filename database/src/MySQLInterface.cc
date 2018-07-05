@@ -115,6 +115,8 @@ int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
 
     mysqlpp::Query q = mysqlconn.query();
 
+    std::cout << "Storing run info..." << std::endl;
+
     try{
         switch(mode){
         case INSERT:
@@ -141,16 +143,21 @@ int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
             Message(INFO)<<"DB Replace mode not functional.\n";
             break;
         case UPSERT:
-            q << "INSERT INTO " << table << " (runid, starttime, endtime, events) VALUES (" 
+            std::cout << "Comment: " << info->metadata["comment"] << std::endl;
+            q << "INSERT INTO " << table << " (runid, starttime, endtime, events, comment, n_channels) VALUES (" 
               << info->runid << ", FROM_UNIXTIME("
               << info->starttime << "), FROM_UNIXTIME("
               << info->endtime << "), "
-              << info->events
+              << info->events << ", "
+              // << info->type << ", "
+              << info->metadata["comment"] << ", "
+              << info->metadata["nchans"]
               << ") ON DUPLICATE KEY UPDATE "
               << "runid = " << info->runid
               << ", starttime = FROM_UNIXTIME(" << info->starttime
               << "), endtime = FROM_UNIXTIME(" << info->endtime
               << "), events = " << info->events << ";";
+            std::cout << q << std::endl;
             q.exec();
             break;
         default:
