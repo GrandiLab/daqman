@@ -33,11 +33,10 @@ public:
     int StoreRuninfo(runinfo* runinfo, STOREMODE mode = UPSERT);
 
     #ifndef __CINT__
-    runinfo LoadRuninfo(const mysqlpp::Query& query);
-    int LoadRuninfo(std::vector<runinfo>& vec, const mysqlpp::Query& query);
+    runinfo LoadRuninfo(mysqlpp::Query& query);
+    int LoadRuninfo(std::vector<runinfo>& vec, mysqlpp::Query& query);
+    runinfo RowToRuninfo(mysqlpp::Row row);
     #endif
-
-    std::string GetNS() const { return database + "." + table; }
 
     std::string host;
     int port;

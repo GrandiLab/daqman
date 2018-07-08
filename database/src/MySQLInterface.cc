@@ -68,7 +68,7 @@ int MySQLInterface::Disconnect()
 runinfo MySQLInterface::LoadRuninfo(long runid)
 {
     std::stringstream ss;
-    ss << "{ runid: " << runid << " }";
+    ss << "SELECT runid, UNIX_TIMESTAMP(starttime), UNIX_TIMESTAMP(endtime), events, comment, n_channels FROM daqruns WHERE runid = " << runid;
     return LoadRuninfo(ss.str());
 }
 
@@ -83,31 +83,53 @@ int MySQLInterface::LoadRuninfo(std::vector<runinfo>& vec, const std::string& qu
 {
     mysqlpp::Query q = mysqlconn.query();
     q << query;
-    return LoadRuninfo(vec, mysqlpp::Query(q));
+    return LoadRuninfo(vec, q);
 }
 
-runinfo MySQLInterface::LoadRuninfo(const mysqlpp::Query& query)
+runinfo MySQLInterface::LoadRuninfo(mysqlpp::Query& query)
 {
     std::vector<runinfo> v;
     if(LoadRuninfo(v, query) <= 0 && v.size() > 0) { return v[0]; }
     return runinfo(-1);
 }
 
-int MySQLInterface::LoadRuninfo(std::vector<runinfo>& vec, const mysqlpp::Query& query)
+int MySQLInterface::LoadRuninfo(std::vector<runinfo>& vec, mysqlpp::Query& query)
 {
     if(!_connected && Connect() != 0) { return -1; }
 
     vec.clear();
 
+    mysqlpp::StoreQueryResult result = query.store();
+
+    for(unsigned int index = 0; index < result.num_rows(); ++index)
+    {
+        runinfo info = RowToRuninfo(result[index]);
+        vec.push_back(info);
+    }
+
     return vec.size();
 }
 
-  /*Cursor cursor = _dbconnection.query(GetNS(),query);
-  while(cursor->more()){
-    BSONObj obj = cursor->next();
-    runinfo info = RuninfoFromBSONObj(obj);
-    vec.push_back(info );
-  }*/
+runinfo MySQLInterface::RowToRuninfo(mysqlpp::Row row)
+{
+    runinfo info;
+
+    try{
+        mysqlpp::Row::const_iterator it;
+        info.runid = row["runid"];
+        info.starttime = row["UNIX_TIMESTAMP(starttime)"];
+        info.endtime = row["UNIX_TIMESTAMP(endtime)"];
+        info.events = row["events"];
+        info.metadata["comment"] = std::string(row["comment"].data(), row["comment"].length());
+        info.metadata["n_chans"] = std::string(row["n_channels"].data(), row["comment"].length());
+    }
+
+    catch(std::exception& e){
+        Message(ERROR) << "Unable to load runinfo: " << e.what() << "\n";
+    }
+
+    return info;
+}
 
 int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
 {
