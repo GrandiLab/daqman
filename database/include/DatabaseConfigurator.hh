@@ -13,10 +13,10 @@ class DatabaseConfigurator{
   phrase _dbname;
   VDatabaseInterface* _db;
 public:
-  DatabaseConfigurator() : _dbname("NONE"), _db(0) {}
+  DatabaseConfigurator() : _dbname("NONE"), _db(0) { }
   ~DatabaseConfigurator(){ delete _db; }
   VDatabaseInterface* GetDB() const { return _db; }
-  
+
   std::ostream& WriteTo(std::ostream& out) const;
   std::istream& ReadFrom(std::istream& in);
 };

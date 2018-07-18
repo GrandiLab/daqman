@@ -36,7 +36,7 @@ protected:
 
 public:
   ///Open a connection to the database
-  virtual int Connect()=0;
+  virtual int Connect(std::string user, std::string password)=0;
   ///Close any open database connection
   virtual int Disconnect() { return _connected = 0; }
   ///Check connection status
@@ -94,6 +94,6 @@ private:
 #endif
 
  
-  ClassDef(VDatabaseInterface,0)
+  ClassDef(VDatabaseInterface,1)
 };
 #endif
