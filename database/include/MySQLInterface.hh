@@ -25,6 +25,7 @@ public:
     int LoadRuninfo(std::vector<runinfo>& vec, const std::string& query);
 
     int StoreRuninfo(runinfo* runinfo, STOREMODE mode = UPSERT);
+    int StoreChannelinfo(unsigned int runid, unsigned int channelid, double spemean, double occupancy, STOREMODE mode = UPSERT);
 
     #ifndef __CINT__
     runinfo LoadRuninfo(mysqlpp::Query& query);

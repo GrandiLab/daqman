@@ -53,6 +53,7 @@ public:
   ///Save the runinfo to the database
   enum STOREMODE { INSERT, UPDATE, REPLACE, UPSERT };
   virtual int StoreRuninfo(runinfo* info, STOREMODE mode=UPSERT)=0;
+  virtual int StoreChannelinfo(unsigned int runid, unsigned int channelid, double spemean, double occupancy, STOREMODE mode = UPSERT)=0;
   
   ///Give an interface to configure from string for within daqroot shell
   void Configure(const std::string &s);

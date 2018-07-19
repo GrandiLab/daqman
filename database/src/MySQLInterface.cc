@@ -220,3 +220,40 @@ int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
 
     return 0;
 }
+
+int MySQLInterface::StoreChannelinfo(unsigned int runid, unsigned int channelid, double spemean, double occupancy, STOREMODE mode)
+{
+    if(Connect(writeuser, writepassword) != 0) { return -1; }
+
+    mysqlpp::Query q = mysqlconn.query();
+
+    try{
+        switch(mode){
+        case UPSERT:
+            q << "INSERT INTO " << caltable << " (runid, channel, spe_mean, lambda) VALUE ("
+              << runid << ", "
+              << channelid << ", "
+              << spemean << ", "
+              << occupancy << ") ON DUPLICATE KEY UPDATE "
+              << "runid = " << runid << ", "
+              << "channel = " << channelid << ", "
+              << "spe_mean = " << spemean << ","
+              << "lambda = " << occupancy << ";";
+            q.exec();
+            break;
+        default:
+            Message(INFO)<<"Unknown db update mode supplied! Doing nothing.\n";
+            break;
+        }
+    }
+    catch(std::exception& e){
+        Message(ERROR)<<"MySQLInterface::StoreChannelinfo caught exception "
+                      <<e.what()<<std::endl;
+        Disconnect();
+        return -3;
+    }
+
+    Disconnect();
+
+    return 0;
+}
