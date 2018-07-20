@@ -156,7 +156,8 @@ int ConvertData::Process(EventPtr event)
 	  
 	  //if still 0, see if we need to throw an error
 	  if(chdata.spe_mean == 0){
-	    chdata.spe_mean = _spemeans[chdata.channel_id] = 1;
+	    chdata.spe_mean = _spemeans[chdata.channel_id] = 100;
+	    //std::cout<<"ConvertData.cc Line 152: ch, spemean: "<<chdata.channel_id<<" "<<chdata.spe_mean<<std::endl;
 	    bool fail = EventHandler::GetInstance()->GetFailOnBadCal();
 	    if(fail){
 	      Message(ERROR)<<"No calibration info for channel "

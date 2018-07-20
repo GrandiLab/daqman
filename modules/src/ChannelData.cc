@@ -173,10 +173,11 @@ void ChannelData::Draw(bool baseline_subtracted, int downsample,
       TLine* pline = new TLine( x[pulse.peak_index], base,
 				x[pulse.peak_index], peaky);
       pline->SetBit(TObject::kCanDelete,true);
-      pline->SetLineColor(kMagenta);
+      pline->SetLineColor(kBlue);
       pline->Draw();
     }
-    if(pulse.fit.fit_done){
+    if(false)
+    {
       bool time_based_fit = false;
       if(time_based_fit){
 	TF1* fitfunc = pulse.fit.GetTF1();
@@ -187,7 +188,8 @@ void ChannelData::Draw(bool baseline_subtracted, int downsample,
 	fitfunc->SetBit(TObject::kCanDelete,true);
 	fitfunc->Draw("same");
       }
-      else{
+      else
+      {
 	TF1* fitfunc = pulse.fit.GetTF1();
 	const int nfitpts = pulse.fit.end_index - pulse.fit.start_index;
 	if(nfitpts > 2){
@@ -242,6 +244,7 @@ void ChannelData::Draw(bool baseline_subtracted, int downsample,
 
   }//end loop over regions
   //Draw boxes around the single photoelectrons
+/*
   for(size_t i = 0; i<single_pe.size(); i++){
     const Spe& spe = single_pe[i];
     TBox* spebox = 
@@ -252,7 +255,7 @@ void ChannelData::Draw(bool baseline_subtracted, int downsample,
     spebox->SetLineColor(kRed);
     spebox->Draw();
   }
-  
+*/
  //Draw boxes for each ROI
   /*
     TAxis* yax = graphs->GetYaxis();
@@ -326,8 +329,9 @@ void ChannelData::Draw(bool baseline_subtracted, int downsample,
 void ChannelData::Print(int verbosity)
 {
     {
+	/*
 	Message m(INFO);
-	m<<"CHANNEL "<<channel_id<<std::endl;
+	m<<"CHANNEL " <<channel_id<<std::endl;
 	m<<"Timestamp: "<<timestamp<<std::endl; 
 	m<<"Trigger Index: "<<trigger_index<<std::endl;
 	m<<"Smoothed Min: "<<smoothed_min<<std::endl; 
@@ -346,7 +350,7 @@ void ChannelData::Print(int verbosity)
 	m<<"Baseline Length: "<<baseline.length<<std::endl;
 	m<<"Baseline Saturated: "<<baseline.saturated<<std::endl;
 	m<<"Baseline Laser Skip: "<<baseline.laserskip<<std::endl;
-	m<<"No. of Pulses: "<<npulses<<std::endl;
+	m<<"No. of Pulses: "<<npulses<<std::endl;	
 	m<<"Integral Max: "<<integral_max<<std::endl;
 	m<<"Integral Min: "<<integral_min<<std::endl;
 	m<<"Integral Max Time: "<<integral_max_time<<std::endl;
@@ -358,8 +362,9 @@ void ChannelData::Print(int verbosity)
 	m<<"S1 Fixed: "<<s1_fixed<<std::endl;
 	m<<"S2 Full: "<<s2_full<<std::endl;
 	m<<"S2 Fixed: "<<s2_fixed<<std::endl;
+     */
     }
-    if (verbosity > 1)
+    if (verbosity > 1 && channel_id == ChannelData::CH_SUM)
     {
 	for (int i = 0; i < npulses; i++)
 	{

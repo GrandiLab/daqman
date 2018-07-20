@@ -121,12 +121,15 @@ inline void Pulse::Print(int channel, int pulse)
     m<<"Start Time: "<<start_time<<std::endl;
     m<<"End Index: "<<end_index<<std::endl;
     m<<"End Time: "<<end_time<<std::endl;
+    /*
     m<<"DT: "<<dt<<std::endl;
     m<<"Peak Index: "<<peak_index<<std::endl;
     m<<"Peak Time: "<<peak_time<<std::endl;
     m<<"Peak Amplitude: "<<peak_amplitude<<std::endl;
+    */
     m<<"Integral: "<<integral<<std::endl;
     m<<"Npe: "<<npe<<std::endl;
+    /*
     m<<"T05: "<<t05<<std::endl;
     m<<"T10: "<<t10<<std::endl;
     m<<"T90: "<<t90<<std::endl;
@@ -141,6 +144,7 @@ inline void Pulse::Print(int channel, int pulse)
     m<<"Fixed Integral 1 : "<<fixed_int1<<std::endl;
     m<<"Fixed Integral 2 Valid: "<<fixed_int2_valid<<std::endl;
     m<<"Fixed Integral 2 : "<<fixed_int2<<std::endl;
+    */    
     m<<"Is S1: "<<is_s1<<std::endl;
     m<<"Start Clean: "<<start_clean<<std::endl;
     m<<"End Clean: "<<end_clean<<std::endl;

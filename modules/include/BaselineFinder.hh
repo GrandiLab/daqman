@@ -67,6 +67,7 @@ public:
   double max_amplitude;   ///< max amplitude for sample to be part of baseline
   double max_return_amplitude; ///< max amplitude for resuming baseline following after an excluded region
   double max_sum_amplitude; ///< max_amplitude for sum channel
+  double max_sum_return_amplitude; ///< max_return_amplitude for sum channel
   double signal_begin_time;  ///< position to start searching for baseline
   int pre_samps;           ///< samples before point to average
   int post_samps;          ///< samples after point to average

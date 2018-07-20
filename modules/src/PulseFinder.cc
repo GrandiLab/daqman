@@ -59,7 +59,7 @@ PulseFinder::PulseFinder() :
   ///@todo Provide helptext for PulseFinder parameters
   RegisterParameter("align_pulses", align_pulses = true,
 		    "Have one set of pulse edges for all channels ? (Search done on sum channel in case of multiple channels)"); 
-  RegisterParameter("search_mode", mode=INTEGRAL);
+  RegisterParameter("search_mode", mode=CURVATURE);
   RegisterParameter("normalize", normalize=true,
 		    "normalize amplitude to spe before searching?");
   RegisterParameter("start_window", start_window = 5);
@@ -615,34 +615,43 @@ void PulseFinder::IntegralSearch( ChannelData* chdata,
 
 void PulseFinder::CurvatureSearch( ChannelData* chdata,
                                    std::vector<int>& start_index,
-                                   std::vector<int>& end_index) {
+                                   std::vector<int>& end_index) 
+{
   double* integral = chdata->GetIntegralWaveform();
 
   int df = down_sample_factor;
   int n = chdata->nsamps/df;
-  std::vector<double> sm(n);
-  for(int i=0; i<n; i++){
-    sm[i] = integral[i*df];
+  
+  //Calculate down-sampled integral
+  std::vector<double> ds_int(n);
+  for(int i=0; i<n; i++)
+  {
+    ds_int[i] = integral[i*df];
   }
 
-  std::vector<double> diff(n);
-  diff[0]= sm[1];
+  //Calculate down-sampled waveform from down-sampled integral
+  std::vector<double> ds_wfm(n);
+  ds_wfm[0]= ds_int[1];
   for (int i=1; i<n-1; i++){
-    diff[i] = sm[i+1]-sm[i-1];
+    ds_wfm[i] = ds_int[i+1]-ds_int[i-1];
   }
 
-  std::vector<double> curve(n);
-  curve[0] = diff[1];
+  //Calculate down-sampled derivative
+  std::vector<double> ds_deriv(n);
+  ds_deriv[0] = ds_wfm[1];
   for (int i=1; i<n-1; i++){
-    curve[i] = diff[i+1]-diff[i-1];
+    ds_deriv[i] = ds_wfm[i+1]-ds_wfm[i-1];
   }
 
   bool in_pulse = false;
-  bool before_peak = true;  // before peak of diff
-  int last = -1; // index of last local maximum on diff
-  for (int i=0; i<n-1; i++){
-    if (!in_pulse){
-      if (curve[i] < pulse_start_curvature){
+  bool before_peak = true;  // before peak of ds_wfm
+  int last = -1; // index of last local maximum on ds_wfm
+  for (int i=0; i<n-1; i++)
+  {
+    if (!in_pulse)
+    {
+      if (ds_deriv[i] < pulse_start_curvature)
+      {
 	in_pulse = true;
 	int start = i*df;
 	//while (integral[start+1] >= integral[start]){
@@ -653,40 +662,49 @@ void PulseFinder::CurvatureSearch( ChannelData* chdata,
 	if(i<n-2) maxloop+= df;
 	double* sub = chdata->GetBaselineSubtractedWaveform();
 	while( ++loopcount<maxloop && -sub[start] < amplitude_start_threshold)
-	  start++;
+	    start++;
 	start_index.push_back(start-2 > 0 ? start-2 : 0);
       }
     }
-    else{ // in pulse
-      if (before_peak){ // look for peak of diff
-        if (curve[i] > 0){
-          before_peak = false;
-        }
-      }
-      else { // after peak of diff
-        if (curve[i] < 0 && last < 0){ // keep track of last diff maximum
-          last = i;
-        }
-        if (curve[i] > 0 && last > 0){ // last diff maximum not start of pileup
-          last = -1;
-        }
+    else
+    { // in pulse
+	if (before_peak)
+	{ // look for peak of ds_wfm
+	    if (ds_deriv[i] > 0)
+	    {
+		before_peak = false;
+	    }
+	}
+	else 
+	{ // after peak of ds_wfm
+	    if (ds_deriv[i] < 0 && last < 0)
+	    { // keep track of last ds_wfm maximum
+		last = i;
+	    }
+	    if (ds_deriv[i] > 0 && last > 0)
+	    { // last ds_wfm maximum not start of pileup
+		last = -1;
+	    }
 
-        if (curve[i] < pile_up_curvature){  // found pile up
-          end_index.push_back(last*df);
-          start_index.push_back(last*df);
-          before_peak = true;
-          last = -1;
-        }
-        else if (diff[i] > pulse_end_slope){ // pulse gradually ends
-          end_index.push_back(i*df);
-          in_pulse = false;
-          before_peak = true;
-          last = -1;
-        }
-      }
+	    if (ds_deriv[i] < pile_up_curvature)
+	    {  // found pile up
+		end_index.push_back(last*df);
+		start_index.push_back(last*df);
+		before_peak = true;
+		last = -1;
+	    }
+	    else if (ds_wfm[i] > pulse_end_slope)
+	    { // pulse gradually ends
+		end_index.push_back(i*df);
+		in_pulse = false;
+		before_peak = true;
+		last = -1;
+	    }
+	}
     }
   }
-  if (in_pulse){
-    end_index.push_back(chdata->nsamps-1);
-  }  
+  if (in_pulse)
+  {
+      end_index.push_back(chdata->nsamps-1);
+  }
 }

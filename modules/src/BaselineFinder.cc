@@ -67,6 +67,8 @@ BaselineFinder::BaselineFinder():
   drifting_params.RegisterParameter("max_sum_amplitude", 
 				    max_sum_amplitude = 0.2,
 		    "max_amplitude for sum channel");
+  drifting_params.RegisterParameter("max_sum_return_amplitude", max_sum_return_amplitude = 0.04,
+				    "max_return_amplitude for sum channel");
   drifting_params.RegisterParameter("pre_samps", pre_samps = 5,
 		    "Samples before to include in moving average");
   drifting_params.RegisterParameter("post_samps", post_samps = 5,
@@ -119,8 +121,7 @@ int BaselineFinder::DriftingBaseline(ChannelData* chdata)
   if(pre_trig_samp < 0) pre_trig_samp = pre_samps+post_samps;
   if(pre_trig_samp >= nsamps) pre_trig_samp = nsamps-1;
   double max_pre_trig = *std::max_element(wave,wave+pre_trig_samp);
-  double mean_pre_trig = std::accumulate(wave,wave+pre_trig_samp,0.) /
-    pre_trig_samp;
+  //double mean_pre_trig = std::accumulate(wave,wave+pre_trig_samp,0.) /pre_trig_samp;
   if( std::abs(chdata->GetVerticalRange() - max_pre_trig ) < 0.01)
     baseline.saturated = true;
   //loop through the data, calculating a moving average as we go,
@@ -128,106 +129,137 @@ int BaselineFinder::DriftingBaseline(ChannelData* chdata)
   //until we find a good baseline
   double var = max_amplitude;
   double var2 = max_return_amplitude;
-  if(chdata->channel_id == ChannelData::CH_SUM){
+  if(chdata->channel_id == ChannelData::CH_SUM)
+  {
     var = max_sum_amplitude;
-    var2 *= max_sum_amplitude / max_amplitude;
+    var2 *= max_sum_return_amplitude;
   }
   
   
-  double sum = 0;
-  int sum_samps = 0;
+  double sum = 0, sig_sum = 0;
+  int sum_samps = 0, sig_sum_samps = 0;
   int samp = -1;
   int window_samps = pre_samps + post_samps + 1;
   int last_good_samp = -1;
-  double moving_base = -1;
+  double moving_base = -1, sig_moving_base = -1;
   baseline.found_baseline = false;
   int laserwindow_begin_samp = chdata->TimeToSample(laserwindow_begin_time);
   int laserwindow_end_samp = chdata->TimeToSample(laserwindow_end_time);
-  while(++samp < chdata->nsamps){
-    bool pass_amp = false;
-    if(!baseline.found_baseline && max_pre_trig - wave[samp] < 2*var)
-      pass_amp = true;
-    //if(!baseline.found_baseline && std::abs(mean_pre_trig-wave[samp]) < var)
-    //pass_amp = true;
-    else if(baseline.found_baseline){
-      if(sum_samps > 0 && std::abs(wave[samp]-moving_base)<var)
-	pass_amp = true;
-      else if(sum_samps == 0 && std::abs(wave[samp]-moving_base)<var2)
-	pass_amp = true; 
-    }
-    else if(samp>=laserwindow_begin_samp && samp <= laserwindow_end_samp)
-      baseline.laserskip = true;
-    if(laserwindow_freeze && samp>=laserwindow_begin_samp && samp <= laserwindow_end_samp ){
-      pass_amp = false;
+  while(++samp < chdata->nsamps)
+  {
+      bool pass_amp = false;
+      if(!baseline.found_baseline && max_pre_trig - wave[samp] < 2*var)
+	  pass_amp = true;
+      //if(!baseline.found_baseline && std::abs(mean_pre_trig-wave[samp]) < var)
+      //pass_amp = true;
+      else if(baseline.found_baseline)
+      {
+	  if(sum_samps > 0 && std::abs(wave[samp]-moving_base)<var) //In baseline region
+	      pass_amp = true;
+	  else if(sum_samps == 0 && (sig_moving_base-moving_base)<var2) //In signal region
+	      pass_amp = true; 
       }
-  
-    if(pass_amp){
-      //this sample is part of the baseline
-      sum += wave[samp];
-      sum_samps++;
-      if(sum_samps > window_samps){
-	//we have collected too many samples, so remove the earliest one
-	sum -= wave[samp-window_samps];
-	sum_samps--;
+      else if(samp>=laserwindow_begin_samp && samp <= laserwindow_end_samp)
+	  baseline.laserskip = true;
+      if(laserwindow_freeze && samp>=laserwindow_begin_samp && samp <= laserwindow_end_samp )
+      {
+	  pass_amp = false;
       }
-      if(sum_samps == window_samps){
-	//we have a validly averaged sample
-	double mean = sum/sum_samps;
-	moving_base = mean;
-	baseform[samp - post_samps] = mean;
-	if(last_good_samp < samp-post_samps-1){
-	  //linearly interpolate the baseline to fill this region
-	  double preval = mean;
-	  if(last_good_samp >=0)
-	    preval = baseform[last_good_samp];
-	  double slope = (mean-preval)/((samp-post_samps)-last_good_samp);
-	  for(int backsamp = last_good_samp+1; backsamp < samp; backsamp++){
-	    baseform[backsamp] = preval + slope*(backsamp-last_good_samp);
+      
+      if(pass_amp)
+      {
+	  //this sample is part of the baseline
+	  sum += wave[samp];
+	  sum_samps++;
+	  sig_sum = 0;
+	  sig_sum_samps = 0;
+	  if(sum_samps > window_samps)
+	  {
+	      //we have collected too many samples, so remove the earliest one
+	      sum -= wave[samp-window_samps];
+	      sum_samps--;
 	  }
-	  if(save_interpolations && last_good_samp >=0){
-	    // locate pe region
-	    Spe pe;
-	    pe.start_time = chdata->SampleToTime(last_good_samp);
-	    pe.length = chdata->SampleToTime(samp-post_samps)-pe.start_time;
-	    int peak_samp = std::min_element(wave+last_good_samp, wave+samp-post_samps)-wave;
-	    pe.peak_time = chdata->SampleToTime(peak_samp);
-	    pe.amplitude = baseform[peak_samp]-wave[peak_samp];
-	    baseline.interpolations.push_back(pe);
-	    baseline.ninterpolations++;
+	  if(sum_samps == window_samps)
+	  {
+	      //we have a validly averaged sample
+	      double mean = sum/sum_samps;
+	      moving_base = mean;
+	      baseform[samp - post_samps] = mean;
+	      if(last_good_samp < samp-post_samps-1)
+	      {
+		  //linearly interpolate the baseline to fill this region
+		  double preval = mean;
+		  if(last_good_samp >=0)
+		      preval = baseform[last_good_samp];
+		  double slope = (mean-preval)/((samp-post_samps)-last_good_samp);
+		  for(int backsamp = last_good_samp+1; backsamp < samp; backsamp++)
+		  {
+		      baseform[backsamp] = preval + slope*(backsamp-last_good_samp);
+		  }
+		  if(save_interpolations && last_good_samp >=0)
+		  {
+		      // locate pe region
+		      Spe pe;
+		      pe.start_time = chdata->SampleToTime(last_good_samp);
+		      pe.length = chdata->SampleToTime(samp-post_samps)-pe.start_time;
+		      int peak_samp = std::min_element(wave+last_good_samp, wave+samp-post_samps)-wave;
+		      pe.peak_time = chdata->SampleToTime(peak_samp);
+		      pe.amplitude = baseform[peak_samp]-wave[peak_samp];
+		      baseline.interpolations.push_back(pe);
+		      baseline.ninterpolations++;
+		  }
+	      }
+	      last_good_samp = samp-post_samps;
+	      if(!baseline.found_baseline)
+	      {
+		  baseline.found_baseline = true;
+		  baseline.mean = mean;
+		  baseline.search_start_index = samp - window_samps;
+		  baseline.length = window_samps;
+		  //calculate the variance
+		  double sum2 = 0;
+		  for(int backsamp = samp-window_samps+1; backsamp<=samp; backsamp++)
+		      sum2 += wave[backsamp]*wave[backsamp];
+		  baseline.variance = sum2/window_samps - mean*mean;
+	      }
 	  }
-	}
-	last_good_samp = samp-post_samps;
-	if(!baseline.found_baseline){
-	  baseline.found_baseline = true;
-	  baseline.mean = mean;
-	  baseline.search_start_index = samp - window_samps;
-	  baseline.length = window_samps;
-	  //calculate the variance
-	  double sum2 = 0;
-	  for(int backsamp = samp-window_samps+1; backsamp<=samp; backsamp++)
-	    sum2 += wave[backsamp]*wave[backsamp];
-	  baseline.variance = sum2/window_samps - mean*mean;
-	}
       }
-    }
-    else{  //!pass_amp
-      //we are part of a real signal now
-      sum = 0; 
-      sum_samps = 0;
-      if(!baseline.found_baseline && samp > pre_trig_samp){
-	//can't find baseline in pre-trigger region! abort!
-	return 0;
+      else
+      {  //!pass_amp
+	  //we are part of a real signal now
+	  sum = 0; 
+	  sum_samps = 0;
+	  sig_sum += wave[samp];
+	  sig_sum_samps++;
+	  if(sig_sum_samps > window_samps)
+	  {
+	      //we have collected too many samples, so remove the earliest one
+	      sig_sum -= wave[samp-window_samps];
+	      sig_sum_samps--;
+	  }
+	  if(sig_sum_samps == window_samps)
+	  {
+	      //we have a validly averaged sample
+	      double mean =sig_sum/sig_sum_samps;
+	      sig_moving_base = mean;
+	  }
+	  if(!baseline.found_baseline && samp > pre_trig_samp)
+	  {
+	      //can't find baseline in pre-trigger region! abort!
+	      return 0;
+	  }
+	  //continue;
       }
-      //continue;
-    }
   } // end loop over samples
   //fill in the missing part at the end
-  for(samp = last_good_samp+1; samp<nsamps; samp++){
-    baseform[samp] = baseform[last_good_samp];
+  for(samp = last_good_samp+1; samp<nsamps; samp++)
+  {
+      baseform[samp] = baseform[last_good_samp];
   }
   //subtract off the baseline
-  for(samp=0; samp<nsamps; samp++){
-    baseform[samp] = wave[samp]-baseform[samp];
+  for(samp=0; samp<nsamps; samp++)
+  {
+      baseform[samp] = wave[samp]-baseform[samp];
   }
       
   return 0;

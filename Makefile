@@ -92,7 +92,7 @@ endif
 #for Princeton machines
 #CAENLIBS    := -lCAENVME 
 #THREADLIBS  += -lboost_thread -lboost_date_time
-THREADLIBS += -L/usr/local/lib -lboost_system -lboost_thread -lboost_date_time
+#THREADLIBS += -L/usr/local/lib -lboost_system -lboost_thread -lboost_date_time
 
 ifeq ("$(shell /bin/hostname)","muttley")
 CXXFLAGS    += -DRELAXDB
