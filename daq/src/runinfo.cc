@@ -131,18 +131,20 @@ struct SmapMerge{
 
 void runinfo::MergeMetadata(const runinfo* other, bool overwritedups)
 {
+  type = other->type;
+
   //first do the global metadata
   const stringmap& othermap = other->metadata;
   if(overwritedups)
     std::for_each(othermap.begin(), othermap.end(), SmapMerge(metadata));
   else
     metadata.insert(othermap.begin(), othermap.end());
-  
+
   //now the channel_metadata
   std::map<int,stringmap>::const_iterator it=other->channel_metadata.begin();
   for( ; it != other->channel_metadata.end(); ++it){
     if(overwritedups)
-      std::for_each(it->second.begin(), it->second.end(), 
+      std::for_each(it->second.begin(), it->second.end(),
 		    SmapMerge(channel_metadata[it->first]));
     else
       channel_metadata[it->first].insert(it->second.begin(), it->second.end());

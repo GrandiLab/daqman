@@ -187,8 +187,9 @@ int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
             Message(INFO)<<"DB Replace mode not functional.\n";
             break;
         case UPSERT:
-            q << "INSERT INTO " << runtable << " (runid, starttime, endtime, events, comment, n_channels) VALUES (" 
-              << info->runid << ", FROM_UNIXTIME("
+            q << "INSERT INTO " << runtable << " (runid, type, starttime, endtime, events, comment, n_channels) VALUES (" 
+              << info->runid << ", '"
+              << info->type << "', FROM_UNIXTIME("
               << info->starttime << "), FROM_UNIXTIME("
               << info->endtime << "), "
               << info->events << ", "
@@ -197,7 +198,8 @@ int MySQLInterface::StoreRuninfo(runinfo* info, STOREMODE mode)
               << info->metadata["nchans"]
               << ") ON DUPLICATE KEY UPDATE "
               << "runid = " << info->runid
-              << ", starttime = FROM_UNIXTIME(" << info->starttime
+              << ", type = '" << info->type
+              << "', starttime = FROM_UNIXTIME(" << info->starttime
               << "), endtime = FROM_UNIXTIME(" << info->endtime
               << "), events = " << info->events
               << ", comment = " << info->metadata["comment"]
