@@ -68,7 +68,7 @@ public:
   time_t endtime;              ///< time acquisition finished
   long triggers;               ///< total number of triggers requested
   long events;                 ///< total number of events stored
-  
+  std::string type;
 
 public:
   typedef std::set<std::string> stringset;

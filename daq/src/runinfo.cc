@@ -58,7 +58,8 @@ void runinfo::Init(bool reset)
   endtime=0;
   triggers=0;
   events=0;
-  
+  type = "";
+
   metadata.clear();
   prerun_dialog_fields.clear();
   postrun_dialog_fields.clear();
@@ -77,7 +78,8 @@ void runinfo::InitializeParameterList()
   RegisterParameter("endtime",endtime, "Timestamp at end of run");
   RegisterParameter("triggers",triggers,"Total triggers requested during run");
   RegisterParameter("events", events, "Number of events recorded during run");
-  
+  RegisterParameter("type", type = "", "Type of Run");
+
   RegisterParameter("metadata", metadata, 
 		    "User-defined per run info categories");
   RegisterParameter("prerun_dialog_fields", prerun_dialog_fields,
@@ -129,18 +131,20 @@ struct SmapMerge{
 
 void runinfo::MergeMetadata(const runinfo* other, bool overwritedups)
 {
+  type = other->type;
+
   //first do the global metadata
   const stringmap& othermap = other->metadata;
   if(overwritedups)
     std::for_each(othermap.begin(), othermap.end(), SmapMerge(metadata));
   else
     metadata.insert(othermap.begin(), othermap.end());
-  
+
   //now the channel_metadata
   std::map<int,stringmap>::const_iterator it=other->channel_metadata.begin();
   for( ; it != other->channel_metadata.end(); ++it){
     if(overwritedups)
-      std::for_each(it->second.begin(), it->second.end(), 
+      std::for_each(it->second.begin(), it->second.end(),
 		    SmapMerge(channel_metadata[it->first]));
     else
       channel_metadata[it->first].insert(it->second.begin(), it->second.end());

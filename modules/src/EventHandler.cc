@@ -145,7 +145,6 @@ int EventHandler::Initialize()
   try{
     VDatabaseInterface* db = GetDatabaseInterface();
     if(db){
-      db->Connect();
       runinfo dbinfo = db->LoadRuninfo(_runinfo.runid);
       if(dbinfo.runid == _runinfo.runid){ //make sure we actually loaded
 	savedinfo.MergeMetadata(&dbinfo, true); //overwrite settings
