@@ -8,22 +8,16 @@
 class MySQLInterface: public VDatabaseInterface{
 public:
     MySQLInterface(const std::string& db = "daqman",
-                   const std::string& tbl = "runinfo",
                    const std::string& hostname = "localhost",
-                   int hostport = 22,
-                   const std::string& username = "",
-                   const std::string& pswd = "");
+		   int hostport = 22);
 
     ~MySQLInterface();
 
     void Configure(const std::string& db = "daqman",
-                   const std::string& tbl = "runinfo",
                    const std::string& hostname = "localhost",
-                   int hostport = 22,
-                   const std::string& username = "",
-                   const std::string& pswd = "");
+                   int hostport = 22);
 
-    int Connect();
+    int Connect(std::string user, std::string password);
     int Disconnect();
 
     runinfo LoadRuninfo(long runid);
@@ -31,6 +25,7 @@ public:
     int LoadRuninfo(std::vector<runinfo>& vec, const std::string& query);
 
     int StoreRuninfo(runinfo* runinfo, STOREMODE mode = UPSERT);
+    int StoreChannelinfo(unsigned int runid, unsigned int channelid, double spemean, double occupancy, STOREMODE mode = UPSERT);
 
     #ifndef __CINT__
     runinfo LoadRuninfo(mysqlpp::Query& query);
@@ -41,9 +36,14 @@ public:
     std::string host;
     int port;
     std::string database;
-    std::string table;
-    std::string user;
-    std::string password;
+
+    std::string runtable;
+    std::string caltable;
+
+    std::string writeuser;
+    std::string writepassword;
+    std::string readuser;
+    std::string readpassword;
 
 private:
     #ifndef __CINT__

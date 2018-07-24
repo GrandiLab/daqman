@@ -156,7 +156,7 @@ int ConvertData::Process(EventPtr event)
 	  
 	  //if still 0, see if we need to throw an error
 	  if(chdata.spe_mean == 0){
-	    chdata.spe_mean = _spemeans[chdata.channel_id] = 100;
+	    chdata.spe_mean = _spemeans[chdata.channel_id] = 10;
 	    //std::cout<<"ConvertData.cc Line 152: ch, spemean: "<<chdata.channel_id<<" "<<chdata.spe_mean<<std::endl;
 	    bool fail = EventHandler::GetInstance()->GetFailOnBadCal();
 	    if(fail){
@@ -166,6 +166,9 @@ int ConvertData::Process(EventPtr event)
 	      return -1;
 	    }
 	  }
+
+      std::cout << "Channel: " << chdata.channel_id << std::endl;
+      std::cout << "SPE Mean: " << chdata.spe_mean << std::endl;
 	}
 
 	// get the PMT information for this channel

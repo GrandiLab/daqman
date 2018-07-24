@@ -36,7 +36,7 @@ protected:
 
 public:
   ///Open a connection to the database
-  virtual int Connect()=0;
+  virtual int Connect(std::string user, std::string password)=0;
   ///Close any open database connection
   virtual int Disconnect() { return _connected = 0; }
   ///Check connection status
@@ -53,6 +53,7 @@ public:
   ///Save the runinfo to the database
   enum STOREMODE { INSERT, UPDATE, REPLACE, UPSERT };
   virtual int StoreRuninfo(runinfo* info, STOREMODE mode=UPSERT)=0;
+  virtual int StoreChannelinfo(unsigned int runid, unsigned int channelid, double spemean, double occupancy, STOREMODE mode = UPSERT)=0;
   
   ///Give an interface to configure from string for within daqroot shell
   void Configure(const std::string &s);
@@ -94,6 +95,6 @@ private:
 #endif
 
  
-  ClassDef(VDatabaseInterface,0)
+  ClassDef(VDatabaseInterface,1)
 };
 #endif
